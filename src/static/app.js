@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="participants-list">
             <h5>Current Participants:</h5>
             <ul>
-              ${details.participants.map(email => `<li>${email}</li>`).join('')}
+              ${details.participants.map(email => `<li>${email} <button class="delete-participant" data-email="${email}">Delete</button></li>`).join('')}
             </ul>
           </div>
         `;
@@ -68,6 +68,15 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+
+        // Dynamically update the participant list
+        const activityCard = [...activitiesList.children].find(card => card.querySelector('h4').textContent === activity);
+        if (activityCard) {
+          const participantsList = activityCard.querySelector('.participants-list ul');
+          const newParticipant = document.createElement('li');
+          newParticipant.innerHTML = `${email} <button class="delete-participant" data-email="${email}">Delete</button>`;
+          participantsList.appendChild(newParticipant);
+        }
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -84,6 +93,29 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Handle participant deletion
+  document.getElementById("participants-list").addEventListener("click", async (event) => {
+    if (event.target.classList.contains("delete-participant")) {
+      const email = event.target.dataset.email;
+      const activity = document.getElementById("activity").value;
+
+      try {
+        const response = await fetch(`/activities/${activity}/unregister?email=${email}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          event.target.parentElement.remove();
+          console.log(`Successfully unregistered ${email} from ${activity}`);
+        } else {
+          console.error("Failed to unregister participant.");
+        }
+      } catch (error) {
+        console.error("Error unregistering participant:", error);
+      }
     }
   });
 
